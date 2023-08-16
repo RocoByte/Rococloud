@@ -55,7 +55,7 @@ apt-get update > /dev/null && apt-get upgrade -y > /dev/null && apt install sudo
 
 # Install and configure Fail2Ban
 echo "Installing and configuring Fail2Ban..."
-apt install fail2ban -y > /dev/null
+sudo apt-get install fail2ban -y > /dev/null
 
 # Create a custom Fail2Ban filter for SSH
 cat << EOF > /etc/fail2ban/filter.d/sshd-rococloud.conf
