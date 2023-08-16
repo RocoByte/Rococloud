@@ -4,7 +4,8 @@
 # Script: RocoCloud Host Setup Script
 # Description: This script is used to prepare a host for connection to the RocoCloud cluster.
 #              It sets up the hostname, installs necessary software, configures Docker,
-#              and mounts an NFS share for storage.
+#              and mounts an NFS share for storage. Additionally, it installs and configures
+#              Fail2Ban for security, synchronizes SSH keys, and sets up a cron job for regular updates.
 # Author: Rocobyte
 #
 # Config example:
@@ -16,6 +17,7 @@
 #
 # Install on host: wget -O https://raw.githubusercontent.com/RocoByte/Rococloud/main/cluster/scripts/setup-server.sh && chmod 777 setup-server.sh && ./setup-server.sh
 ################################################################################
+
 
 # Define color codes
 RED='\033[0;31m'
