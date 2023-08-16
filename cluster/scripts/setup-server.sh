@@ -53,6 +53,40 @@ echo "Installing updates and upgrades..."
 apt-get update > /dev/null && apt-get upgrade -y > /dev/null && apt install sudo -y > /dev/null 2>&1
 echo "Updates and upgrades installed."
 
+# Install and configure Fail2Ban
+echo "Installing and configuring Fail2Ban..."
+apt install fail2ban -y > /dev/null
+
+# Create a custom Fail2Ban filter for SSH
+cat << EOF > /etc/fail2ban/filter.d/sshd-rococloud.conf
+[Definition]
+failregex = ^%(__prefix_line)s(?:error: PAM: )?Authentication failure for .* from <HOST>.*$
+ignoreregex =
+EOF
+
+# Create a custom Fail2Ban filter for SSH
+cat << EOF > /etc/fail2ban/filter.d/sshd-rococloud.conf
+[Definition]
+failregex = ^%(__prefix_line)s(?:error: PAM: )?Authentication failure for .* from <HOST>.*$
+ignoreregex =
+EOF
+
+# Create a custom Fail2Ban jail for SSH
+cat << EOF > /etc/fail2ban/jail.d/sshd-rococloud.conf
+[sshd-rococloud]
+enabled = true
+filter = sshd-rococloud
+port = ssh
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 86400 # 24 hours ban
+EOF
+
+# Restart Fail2Ban
+service fail2ban restart
+
+echo "Fail2Ban installed and configured."
+
 # Install required software
 echo "Installing required software..."
 sudo apt-get install ca-certificates curl gnupg -y > /dev/null 2>&1
