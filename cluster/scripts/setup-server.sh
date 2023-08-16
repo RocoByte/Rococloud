@@ -12,6 +12,7 @@
 # swarm_ip_address="YOUR_IP_ADDRESS"
 # storage_ip_address="YOUR_IP_ADDRESS"
 # location="YOUR_LOCATION"
+# provisioning_server="10.0.0.1"
 ################################################################################
 
 # Define color codes
@@ -51,7 +52,6 @@ echo "Hostname has been changed to $(cat /etc/hostname)"
 # Update and upgrade the system
 echo "Installing updates and upgrades..."
 apt-get update > /dev/null && apt-get upgrade -y > /dev/null && apt install sudo -y > /dev/null 2>&1
-echo "Updates and upgrades installed."
 
 # Install and configure Fail2Ban
 echo "Installing and configuring Fail2Ban..."
@@ -141,9 +141,11 @@ if expr "$dockerInfo" : "Docker version" > /dev/null; then
    # Create directory with the name based on the location
    storage_directory="/storage/$location"
    mkdir -p "$storage_directory"
+   mkdir -p "/cluster/provisioning"
 
    # Add connection string to fstab
    echo "$nfs_ip_address:/$location        $storage_directory   nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0" >> /etc/fstab
+   echo "$provisioning_server:/provisioning        /cluster/provisioning   nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0" >> /etc/fstab
 
    # Mount NFS share and check if successful
    if mount -a; then
@@ -152,8 +154,38 @@ if expr "$dockerInfo" : "Docker version" > /dev/null; then
        echo -e "${RED}Failed:${NC} to mount NFS share."
    fi
 
+   # Synchronize SSH Keys
+   AUTHORIZED_KEYS_DIR="/cluster/provisioning"
+   AUTHORIZED_KEYS_FILE="$AUTHORIZED_KEYS_DIR/authorized_keys"
+   echo "Synchronizing SSH Keys..."
+   rsync -avz "$AUTHORIZED_KEYS_FILE" "/root/.ssh/authorized_keys"
+
+   # Create a cron job to update SSH keys every 5 minutes
+   echo "Creating cron job to update SSH keys..."
+   (crontab -l 2>/dev/null; echo "*/5 * * * * rsync -avz $AUTHORIZED_KEYS_FILE /root/.ssh/authorized_keys") | crontab -
+
+   # List information about all SSH keys in the authorized_keys file
+   echo "Creating cron job to update SSH keys..."
+   (crontab -l 2>/dev/null; echo "*/5 * * * * rsync -avz $AUTHORIZED_KEYS_FILE /root/.ssh/authorized_keys") | crontab -
+
+   # List information about all SSH keys in the authorized_keys file
+   echo "Listing information for all SSH keys:"
+   while IFS= read -r line; do
+         if [[ "$line" =~ ssh-rsa ]]; then
+            key_type=$(echo "$line" | awk '{print $1}')
+            key_data=$(echo "$line" | awk '{print $2}')
+            comment=$(echo "$line" | awk '{print $3}')
+            if [[ -n "$comment" ]]; then
+                echo "- $comment"
+            else
+                echo "- $key_type $key_data"
+            fi
+         fi
+   done < "/root/.ssh/authorized_keys"
+
    # Reboot the system
    echo "Preparation complete. Rebooting the system..."
+   sleep 3
    reboot
 else
    echo -e "${RED}Error:${NC} Docker could not be found on this host. The installation does not appear to have been successful."
