@@ -82,7 +82,7 @@ echo "Fail2Ban installed and configured."
 
 # Install required software
 echo "Installing required software..."
-sudo apt-get install ca-certificates curl gnupg -y > /dev/null 2>&1
+sudo apt-get install ca-certificates curl rsync gnupg -y > /dev/null 2>&1
 echo "Required software installed."
 
 # Install Docker GPG key and repository
