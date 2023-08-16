@@ -64,13 +64,6 @@ failregex = ^%(__prefix_line)s(?:error: PAM: )?Authentication failure for .* fro
 ignoreregex =
 EOF
 
-# Create a custom Fail2Ban filter for SSH
-cat << EOF > /etc/fail2ban/filter.d/sshd-rococloud.conf
-[Definition]
-failregex = ^%(__prefix_line)s(?:error: PAM: )?Authentication failure for .* from <HOST>.*$
-ignoreregex =
-EOF
-
 # Create a custom Fail2Ban jail for SSH
 cat << EOF > /etc/fail2ban/jail.d/sshd-rococloud.conf
 [sshd-rococloud]
