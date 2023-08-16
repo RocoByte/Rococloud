@@ -129,7 +129,7 @@ if expr "$dockerInfo" : "Docker version" > /dev/null; then
 
    # Handle connection to storage sharepoint
    echo "Installing NFS packages and configuring storage sharepoint..."
-   apt install nfs-kernel-server nfs-common -y > /dev/null
+   sudo apt-get install nfs-kernel-server nfs-common -y > /dev/null
 
    # Create directory with the name based on the location
    storage_directory="/storage/$location"
