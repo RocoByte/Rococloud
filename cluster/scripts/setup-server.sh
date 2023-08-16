@@ -13,6 +13,8 @@
 # storage_ip_address="YOUR_IP_ADDRESS"
 # location="YOUR_LOCATION"
 # provisioning_server="10.0.0.1"
+#
+# Install on host: wget -O https://raw.githubusercontent.com/RocoByte/Rococloud/main/cluster/scripts/setup-server.sh && chmod 777 setup-server.sh && ./setup-server.sh
 ################################################################################
 
 # Define color codes
