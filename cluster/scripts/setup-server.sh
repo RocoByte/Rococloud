@@ -165,10 +165,6 @@ if expr "$dockerInfo" : "Docker version" > /dev/null; then
    (crontab -l 2>/dev/null; echo "*/5 * * * * rsync -avz $AUTHORIZED_KEYS_FILE /root/.ssh/authorized_keys") | crontab -
 
    # List information about all SSH keys in the authorized_keys file
-   echo "Creating cron job to update SSH keys..."
-   (crontab -l 2>/dev/null; echo "*/5 * * * * rsync -avz $AUTHORIZED_KEYS_FILE /root/.ssh/authorized_keys") | crontab -
-
-   # List information about all SSH keys in the authorized_keys file
    echo "Listing information for all SSH keys:"
    while IFS= read -r line; do
          if [[ "$line" =~ ssh-rsa ]]; then
