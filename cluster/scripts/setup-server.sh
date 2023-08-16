@@ -50,12 +50,12 @@ echo "Hostname has been changed to $(cat /etc/hostname)"
 
 # Update and upgrade the system
 echo "Installing updates and upgrades..."
-apt update > /dev/null && apt upgrade -y > /dev/null && apt install sudo -y > /dev/null 2>&1
+apt-get update > /dev/null && apt-get upgrade -y > /dev/null && apt install sudo -y > /dev/null 2>&1
 echo "Updates and upgrades installed."
 
 # Install required software
 echo "Installing required software..."
-sudo apt install ca-certificates curl gnupg -y > /dev/null 2>&1
+sudo apt-get install ca-certificates curl gnupg -y > /dev/null 2>&1
 echo "Required software installed."
 
 # Install Docker GPG key and repository
@@ -74,8 +74,8 @@ echo "Docker repository added to sources."
 
 # Install Docker and related packages
 echo "Installing Docker and related packages..."
-sudo apt update -y > /dev/null
-sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y > /dev/null 2>&1
+sudo apt-get update -y > /dev/null
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y > /dev/null 2>&1
 echo "Docker and related packages installed."
 
 # Check if Docker installation was successful
