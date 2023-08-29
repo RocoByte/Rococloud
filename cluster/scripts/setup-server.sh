@@ -4,20 +4,15 @@
 # Script: RocoCloud Host Setup Script
 # Description: This script is used to prepare a host for connection to the RocoCloud cluster.
 #              It sets up the hostname, installs necessary software, configures Docker,
-#              and mounts an NFS share for storage. Additionally, it installs and configures
-#              Fail2Ban for security, synchronizes SSH keys, and sets up a cron job for regular updates.
+#              and mounts an NFS share for storage.
 # Author: Rocobyte
 #
 # Config example:
 # swarm_token="YOUR_SWARM_TOKEN"
 # swarm_ip_address="YOUR_IP_ADDRESS"
 # storage_ip_address="YOUR_IP_ADDRESS"
-# location="YOUR_LOCATION"
-# provisioning_server="10.0.0.1"
-#
-# Install on host: wget -O https://raw.githubusercontent.com/RocoByte/Rococloud/main/cluster/scripts/setup-server.sh && chmod 777 setup-server.sh && ./setup-server.sh
-################################################################################
 
+################################################################################
 
 # Define color codes
 RED='\033[0;31m'
@@ -37,7 +32,7 @@ fi
 source "$SCRIPT_DIR/swarm_config.conf" || { echo -e "${RED}Error:${NC} Unable to source configuration file $CONFIG_FILE"; exit 1; }
 
 # Inform the user that the host is being prepared
-echo "Preparing this host for use. This may take a moment."
+echo "Preparing this host, this may take a moment."
 
 # Backup the original hostname if not already done
 if [ ! -e "/etc/hostname.init" ]; then
@@ -55,11 +50,19 @@ echo "Hostname has been changed to $(cat /etc/hostname)"
 
 # Update and upgrade the system
 echo "Installing updates and upgrades..."
-apt-get update > /dev/null && apt-get upgrade -y > /dev/null && apt install sudo -y > /dev/null 2>&1
+apt-get update > /dev/null && apt-get upgrade -y > /dev/null && apt-get install sudo -y > /dev/null 2>&1
+echo "Updates and upgrades installed."
+
+# Configure SSH to allow only key-based authentication
+echo "Configuring SSH for key-based authentication..."
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin without-password/' /etc/ssh/sshd_config
+service ssh restart
+echo "SSH configured for key-based authentication."
 
 # Install and configure Fail2Ban
 echo "Installing and configuring Fail2Ban..."
-sudo apt-get install fail2ban -y > /dev/null
+apt-get install fail2ban -y > /dev/null
 
 # Create a custom Fail2Ban filter for SSH
 cat << EOF > /etc/fail2ban/filter.d/sshd-rococloud.conf
@@ -86,7 +89,7 @@ echo "Fail2Ban installed and configured."
 
 # Install required software
 echo "Installing required software..."
-sudo apt-get install ca-certificates curl rsync gnupg -y > /dev/null 2>&1
+sudo apt-get install ca-certificates curl gnupg -y > /dev/null 2>&1
 echo "Required software installed."
 
 # Install Docker GPG key and repository
@@ -133,16 +136,13 @@ if expr "$dockerInfo" : "Docker version" > /dev/null; then
 
    # Handle connection to storage sharepoint
    echo "Installing NFS packages and configuring storage sharepoint..."
-   sudo apt-get install nfs-kernel-server nfs-common -y > /dev/null
+   apt-get install nfs-common -y > /dev/null
 
    # Create directory with the name based on the location
-   storage_directory="/storage/$location"
-   mkdir -p "$storage_directory"
-   mkdir -p "/cluster/provisioning"
+   mkdir -p "/storage/"
 
    # Add connection string to fstab
-   echo "$nfs_ip_address:/$location        $storage_directory   nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0" >> /etc/fstab
-   echo "$provisioning_server:/provisioning        /cluster/provisioning   nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0" >> /etc/fstab
+   echo "$nfs_ip_address:/mnt/ /storage/ nfs rw,user 0 0" >> /etc/fstab
 
    # Mount NFS share and check if successful
    if mount -a; then
@@ -151,34 +151,8 @@ if expr "$dockerInfo" : "Docker version" > /dev/null; then
        echo -e "${RED}Failed:${NC} to mount NFS share."
    fi
 
-   # Synchronize SSH Keys
-   AUTHORIZED_KEYS_DIR="/cluster/provisioning"
-   AUTHORIZED_KEYS_FILE="$AUTHORIZED_KEYS_DIR/authorized_keys"
-   echo "Synchronizing SSH Keys..."
-   rsync -avz "$AUTHORIZED_KEYS_FILE" "/root/.ssh/authorized_keys"
-
-   # Create a cron job to update SSH keys every 5 minutes
-   echo "Creating cron job to update SSH keys..."
-   (crontab -l 2>/dev/null; echo "*/5 * * * * rsync -avz $AUTHORIZED_KEYS_FILE /root/.ssh/authorized_keys") | crontab -
-
-   # List information about all SSH keys in the authorized_keys file
-   echo "Listing information for all SSH keys:"
-   while IFS= read -r line; do
-         if [[ "$line" =~ ssh-rsa ]]; then
-            key_type=$(echo "$line" | awk '{print $1}')
-            key_data=$(echo "$line" | awk '{print $2}')
-            comment=$(echo "$line" | awk '{print $3}')
-            if [[ -n "$comment" ]]; then
-                echo "- $comment"
-            else
-                echo "- $key_type $key_data"
-            fi
-         fi
-   done < "/root/.ssh/authorized_keys"
-
    # Reboot the system
    echo "Preparation complete. Rebooting the system..."
-   sleep 3
    reboot
 else
    echo -e "${RED}Error:${NC} Docker could not be found on this host. The installation does not appear to have been successful."
