@@ -142,7 +142,7 @@ if expr "$dockerInfo" : "Docker version" > /dev/null; then
    mkdir -p "/storage/"
 
    # Add connection string to fstab
-   echo "$nfs_ip_address:/mnt/ /storage/ nfs rw,user 0 0" >> /etc/fstab
+   echo "$nfs_ip_address:/mnt/ /storage/  nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0" >> /etc/fstab
 
    # Mount NFS share and check if successful
    if mount -a; then
